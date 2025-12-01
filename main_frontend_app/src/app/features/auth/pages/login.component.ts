@@ -75,9 +75,13 @@ export class LoginComponent {
     this.error = '';
     this.auth.login(this.model).subscribe({
       next: (res) => {
-        if (res.requiresOtp) {
+        if (res?.requiresOtp) {
+          // Navigate to OTP, email is passed for convenience
           this.router.navigate(['/auth/otp'], { queryParams: { email: this.model.email } });
+        } else if (res?.token) {
+          this.router.navigate(['/dashboard']);
         } else {
+          // Fallback in unexpected responses
           this.router.navigate(['/dashboard']);
         }
       },

@@ -7,10 +7,10 @@ import { ApiService } from './api.service';
  * Typings for auth-related payloads and responses.
  */
 export interface LoginPayload { email: string; password: string; }
-export interface OtpPayload { email: string; otp: string; }
+export interface OtpPayload { email: string; otp: string; otpToken: string; }
 export interface ForgotPayload { email: string; }
 export interface ResetPayload { token: string; password: string; }
-export interface AuthResponse { token: string; requiresOtp?: boolean; }
+export interface AuthResponse { token?: string; requiresOtp?: boolean; otpToken?: string; }
 
 /**
  * PUBLIC_INTERFACE
@@ -20,9 +20,11 @@ export interface AuthResponse { token: string; requiresOtp?: boolean; }
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly TOKEN_KEY = 'auth_token';
+  private readonly OTP_TOKEN_KEY = 'otp_token';
   private platformId = inject(PLATFORM_ID);
-  // Fallback in-memory token for SSR to avoid ReferenceError
+  // Fallback in-memory tokens for SSR to avoid ReferenceError
   private memoryToken: string | null = null;
+  private memoryOtpToken: string | null = null;
 
   private _isAuthed = signal<boolean>(this.getToken() !== null);
 
@@ -34,10 +36,16 @@ export class AuthService {
 
   // PUBLIC_INTERFACE
   login(payload: LoginPayload): Observable<AuthResponse> {
-    /** Calls login endpoint and stores token if returned. */
+    /**
+     * Calls login endpoint. If backend indicates OTP is required, stores otpToken.
+     * If a JWT token is returned directly, store it and mark authenticated.
+     */
     return this.api.post<AuthResponse>('/auth/login', payload).pipe(
       tap(res => {
-        if (res.token) {
+        if (res?.requiresOtp && res?.otpToken) {
+          this.setOtpToken(res.otpToken);
+        }
+        if (res?.token) {
           this.setToken(res.token);
         }
       })
@@ -45,12 +53,19 @@ export class AuthService {
   }
 
   // PUBLIC_INTERFACE
-  verifyOtp(payload: OtpPayload): Observable<AuthResponse> {
-    /** Verifies OTP and stores token if provided by backend. */
-    return this.api.post<AuthResponse>('/auth/otp', payload).pipe(
+  verifyOtp(payload: { email: string; otp: string }): Observable<AuthResponse> {
+    /**
+     * Verifies OTP with backend. Uses stored otpToken from login step.
+     * On success, stores JWT token.
+     */
+    const otpToken = this.getOtpToken();
+    const body: OtpPayload = { email: payload.email, otp: payload.otp, otpToken: otpToken || '' };
+    return this.api.post<AuthResponse>('/auth/verify-otp', body).pipe(
       tap(res => {
-        if (res.token) {
+        if (res?.token) {
           this.setToken(res.token);
+          // clear otp token once fully authenticated
+          this.clearOtpToken();
         }
       })
     );
@@ -70,11 +85,13 @@ export class AuthService {
 
   // PUBLIC_INTERFACE
   logout(): void {
-    /** Clears auth token and marks user as logged-out. */
+    /** Clears auth and OTP tokens and marks user as logged-out. */
     if (this.isBrowser()) {
       (globalThis as any).localStorage?.removeItem(this.TOKEN_KEY);
+      (globalThis as any).localStorage?.removeItem(this.OTP_TOKEN_KEY);
     } else {
       this.memoryToken = null;
+      this.memoryOtpToken = null;
     }
     this._isAuthed.set(false);
   }
@@ -109,5 +126,40 @@ export class AuthService {
       this.memoryToken = token;
     }
     this._isAuthed.set(true);
+  }
+
+  private setOtpToken(token: string) {
+    if (this.isBrowser()) {
+      try {
+        (globalThis as any).localStorage?.setItem(this.OTP_TOKEN_KEY, token);
+      } catch {
+        // ignore storage errors
+      }
+    } else {
+      this.memoryOtpToken = token;
+    }
+  }
+
+  private getOtpToken(): string | null {
+    if (this.isBrowser()) {
+      try {
+        return (globalThis as any).localStorage?.getItem(this.OTP_TOKEN_KEY) ?? null;
+      } catch {
+        return null;
+      }
+    }
+    return this.memoryOtpToken;
+  }
+
+  private clearOtpToken() {
+    if (this.isBrowser()) {
+      try {
+        (globalThis as any).localStorage?.removeItem(this.OTP_TOKEN_KEY);
+      } catch {
+        // ignore storage errors
+      }
+    } else {
+      this.memoryOtpToken = null;
+    }
   }
 }

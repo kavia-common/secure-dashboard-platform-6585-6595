@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AuthService, OtpPayload } from '../../../core/services/auth.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-otp',
@@ -16,7 +16,7 @@ import { AuthService, OtpPayload } from '../../../core/services/auth.service';
 
       <form (ngSubmit)="submit()" #form="ngForm">
         <label>OTP Code</label>
-        <input name="otp" [(ngModel)]="model.otp" required maxlength="6" placeholder="123456"/>
+        <input name="otp" [(ngModel)]="otp" required maxlength="6" placeholder="123456"/>
 
         <button class="primary" [disabled]="form.invalid">Verify</button>
       </form>
@@ -44,15 +44,14 @@ export class OtpComponent {
   private route = inject(ActivatedRoute);
 
   email = this.route.snapshot.queryParamMap.get('email') || '';
-  model: OtpPayload = { email: this.email, otp: '' };
+  otp = '';
   error = '';
 
   // PUBLIC_INTERFACE
   submit() {
     /** Submits OTP code to backend and navigates to dashboard on success. */
     this.error = '';
-    this.model.email = this.email;
-    this.auth.verifyOtp(this.model).subscribe({
+    this.auth.verifyOtp({ email: this.email, otp: this.otp }).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: (e) => this.error = e?.error?.message || 'OTP verification failed'
     });

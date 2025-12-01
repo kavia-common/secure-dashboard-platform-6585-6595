@@ -7,6 +7,7 @@ import { catchError } from 'rxjs/operators';
 /**
  * PUBLIC_INTERFACE
  * ApiService wraps HttpClient and centralizes base URL and error handling.
+ * The base URL is read from environment.apiBaseUrl (defaults to http://localhost:3001).
  */
 @Injectable({ providedIn: 'root' })
 export class ApiService {
