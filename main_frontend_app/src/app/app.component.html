@@ -1,3 +1,16 @@
-<div class="container">
-  <h1>{{ title }}</h1>
-</div>
+<header class="app-header">
+  <div class="brand">
+    <span class="logo">◆</span>
+    <span class="title">Secure Dashboard</span>
+  </div>
+
+  <nav class="nav">
+    <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+    <a routerLink="/auth/login" routerLinkActive="active" *ngIf="!isLoggedIn()">Login</a>
+    <button class="logout" *ngIf="isLoggedIn()" (click)="logout()">Logout</button>
+  </nav>
+</header>
+
+<main class="app-main">
+  <router-outlet></router-outlet>
+</main>
