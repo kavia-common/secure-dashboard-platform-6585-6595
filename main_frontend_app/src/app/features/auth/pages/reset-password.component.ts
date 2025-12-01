@@ -1,67 +1,101 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { AfterViewInit, Component, inject } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { FormsModule, NgForm, NgModel } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService, ResetPayload } from '../../../core/services/auth.service';
+import { PLATFORM_ID } from '@angular/core';
 
 @Component({
   selector: 'app-reset-password',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-  <div class="auth-wrap">
-    <div class="card">
-      <h2>Reset password</h2>
-      <p class="sub">Enter your new password</p>
+  <div class="auth-wrap" role="region" aria-labelledby="reset-heading">
+    <div class="card" role="form" aria-describedby="reset-help">
+      <h1 id="reset-heading" class="h2">Reset password</h1>
+      <p id="reset-help" class="subtle">Enter your new password</p>
 
-      <form (ngSubmit)="submit()" #form="ngForm">
-        <label>New password</label>
-        <input name="password" [(ngModel)]="password" type="password" required placeholder="••••••••"/>
+      <form (ngSubmit)="submit(form)" #form="ngForm" class="form" novalidate>
+        <div class="field">
+          <label for="new-password">New password</label>
+          <input
+            id="new-password"
+            class="input"
+            name="password"
+            [(ngModel)]="password"
+            #passwordModel="ngModel"
+            type="password"
+            required
+            placeholder="••••••••"
+            aria-required="true"
+            [attr.aria-invalid]="passwordModel.invalid && (passwordModel.touched || form.submitted) ? 'true' : 'false'"
+          />
+          <small class="alert alert-error" *ngIf="passwordModel.invalid && (passwordModel.touched || form.submitted)" role="alert" aria-live="polite">
+            Password is required.
+          </small>
+        </div>
 
-        <button class="primary" [disabled]="form.invalid">Reset password</button>
+        <button
+          class="btn btn-primary"
+          type="submit"
+          [disabled]="form.invalid || pending"
+          [attr.aria-disabled]="(form.invalid || pending) ? 'true' : null"
+          [attr.aria-busy]="pending ? 'true' : null"
+        >
+          {{ pending ? 'Resetting…' : 'Reset password' }}
+        </button>
       </form>
 
-      <p class="success" *ngIf="message">{{ message }}</p>
-      <p class="error" *ngIf="error">{{ error }}</p>
+      <p class="alert alert-success" *ngIf="message" role="status" aria-live="polite">{{ message }}</p>
+      <p class="alert alert-error" *ngIf="error" role="alert" aria-live="assertive">{{ error }}</p>
     </div>
   </div>
   `,
   styles: [`
   :host{display:block}
   .auth-wrap{display:grid; place-items:center; min-height:calc(100dvh - 56px); padding:1rem;}
-  .card{width:100%; max-width:420px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:1.25rem;
-    box-shadow: 0 10px 30px rgba(17,24,39,0.06);}
-  h2{margin:0; color:#111827}
-  .sub{color:#6b7280; margin:.25rem 0 1rem}
-  form{display:grid; gap:.6rem}
-  input{padding:.6rem .7rem; border:1px solid #e5e7eb; border-radius:8px}
-  .primary{margin-top:.25rem; background:#7C3AED; color:#fff; border:none; border-radius:8px; padding:.6rem .8rem; cursor:pointer;}
-  .success{margin-top:.75rem; color:#0D9488}
-  .error{margin-top:.75rem; color:#EF4444}
+  .card{ width:100%; max-width:420px; }
   `]
 })
-export class ResetPasswordComponent {
+export class ResetPasswordComponent implements AfterViewInit {
   private route = inject(ActivatedRoute);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private platformId = inject(PLATFORM_ID);
 
   token = this.route.snapshot.queryParamMap.get('token') || '';
   password = '';
   message = '';
   error = '';
+  pending = false;
+
+  ngAfterViewInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      (globalThis as any).document?.getElementById?.('reset-heading')?.focus?.();
+    }
+  }
 
   // PUBLIC_INTERFACE
-  submit() {
+  submit(form: NgForm) {
     /** Submits new password with token to backend and routes to login on success. */
     this.message = '';
     this.error = '';
+    if (form.invalid) {
+      if (isPlatformBrowser(this.platformId)) {
+        const el = (globalThis as any).document?.getElementById?.('new-password') as HTMLElement | null;
+        el?.focus?.();
+      }
+      return;
+    }
     const payload: ResetPayload = { token: this.token, password: this.password };
+    this.pending = true;
     this.auth.resetPassword(payload).subscribe({
       next: (res) => {
+        this.pending = false;
         this.message = res.message || 'Password reset successfully';
         (globalThis as any).setTimeout(() => this.router.navigate(['/auth/login']), 900);
       },
-      error: (e) => this.error = e?.error?.message || 'Reset failed'
+      error: (e) => { this.pending = false; this.error = e?.error?.message || 'Reset failed'; }
     });
   }
 }

@@ -1,16 +1,26 @@
-<header class="app-header">
-  <div class="brand">
-    <span class="logo">◆</span>
-    <span class="title">Secure Dashboard</span>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<header class="app-header" role="banner">
+  <div class="brand" aria-label="Application brand">
+    <span class="logo" aria-hidden="true">◆</span>
+    <span class="title" aria-label="Secure Dashboard">Secure Dashboard</span>
   </div>
 
-  <nav class="nav">
+  <nav class="nav" role="navigation" aria-label="Primary">
     <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
     <a routerLink="/auth/login" routerLinkActive="active" *ngIf="!isLoggedIn()">Login</a>
-    <button class="logout" *ngIf="isLoggedIn()" (click)="logout()">Logout</button>
+    <button
+      class="logout btn btn-primary"
+      *ngIf="isLoggedIn()"
+      (click)="logout()"
+      type="button"
+      aria-label="Logout"
+    >
+      Logout
+    </button>
   </nav>
 </header>
 
-<main class="app-main">
+<main id="main-content" class="app-main container" role="main" tabindex="-1">
   <router-outlet></router-outlet>
 </main>

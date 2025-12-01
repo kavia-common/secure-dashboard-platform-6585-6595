@@ -11,6 +11,20 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
 - Pages: Login, OTP, Forgot Password, Reset Password
 - Violet Dreams theme with header and logout
 
+## Accessibility and UX enhancements
+
+- Skip link: a "Skip to main content" link is available as the first focusable element for keyboard users.
+- Landmarks: header has role="banner", main has role="main" and is focusable (tabindex="-1") to receive focus on route changes.
+- Forms:
+  - All inputs have associated labels via for/id, proper aria-required and aria-invalid bindings.
+  - Error, success messages use aria-live regions (role="alert" or role="status") to notify screen readers.
+  - Submit buttons expose aria-busy and aria-disabled while API calls are in-flight.
+  - On submit with validation errors the first invalid control receives focus.
+- Keyboard navigation: logical tab order, Enter submits forms, Escape can be handled by the browser to clear fields.
+- Focus visibility: strong high-contrast focus outline and offset across interactive controls.
+- Reduced motion: honors prefers-reduced-motion by reducing transitions.
+- Consistent theme utilities: shared .btn, .input, .card classes and color tokens ensure visual consistency.
+
 ## Development server
 
 Start the server:

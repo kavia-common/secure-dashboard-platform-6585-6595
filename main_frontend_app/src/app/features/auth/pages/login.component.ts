@@ -1,34 +1,98 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { AfterViewInit, Component, ElementRef, ViewChild, inject } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { FormsModule, NgForm, NgModel } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService, LoginPayload } from '../../../core/services/auth.service';
+import { PLATFORM_ID } from '@angular/core';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-  <div class="auth-wrap">
-    <div class="card">
-      <h2>Welcome back</h2>
-      <p class="sub">Sign in to continue</p>
+  <div class="auth-wrap" role="region" aria-labelledby="login-heading">
+    <div class="card" role="form" aria-describedby="login-help">
+      <h1 id="login-heading" class="h2">Welcome back</h1>
+      <p id="login-help" class="subtle">Sign in to continue</p>
 
-      <form (ngSubmit)="submit()" #form="ngForm">
-        <label>Email</label>
-        <input name="email" [(ngModel)]="model.email" type="email" required placeholder="you@example.com"/>
+      <form (ngSubmit)="submit(form)" #form="ngForm" class="form" novalidate>
+        <div class="field">
+          <label for="email">Email</label>
+          <input
+            id="email"
+            class="input"
+            name="email"
+            [(ngModel)]="model.email"
+            #emailModel="ngModel"
+            type="email"
+            required
+            autocomplete="username"
+            placeholder="you@example.com"
+            aria-required="true"
+            [attr.aria-invalid]="emailModel.invalid && (emailModel.touched || form.submitted) ? 'true' : 'false'"
+            [attr.aria-describedby]="emailErrorId"
+          />
+          <small
+            class="alert alert-error"
+            *ngIf="emailModel.invalid && (emailModel.touched || form.submitted)"
+            [id]="emailErrorId"
+            role="alert"
+            aria-live="polite"
+          >
+            Please enter a valid email address.
+          </small>
+        </div>
 
-        <label>Password</label>
-        <input name="password" [(ngModel)]="model.password" type="password" required placeholder="••••••••"/>
+        <div class="field">
+          <label for="password">Password</label>
+          <input
+            id="password"
+            class="input"
+            name="password"
+            [(ngModel)]="model.password"
+            #passwordModel="ngModel"
+            type="password"
+            required
+            autocomplete="current-password"
+            placeholder="••••••••"
+            aria-required="true"
+            [attr.aria-invalid]="passwordModel.invalid && (passwordModel.touched || form.submitted) ? 'true' : 'false'"
+            [attr.aria-describedby]="passwordErrorId"
+          />
+          <small
+            class="alert alert-error"
+            *ngIf="passwordModel.invalid && (passwordModel.touched || form.submitted)"
+            [id]="passwordErrorId"
+            role="alert"
+            aria-live="polite"
+          >
+            Password is required.
+          </small>
+        </div>
 
-        <button class="primary" [disabled]="form.invalid">Login</button>
+        <button
+          class="btn btn-primary"
+          type="submit"
+          [disabled]="form.invalid || pending"
+          [attr.aria-disabled]="(form.invalid || pending) ? 'true' : null"
+          [attr.aria-busy]="pending ? 'true' : null"
+        >
+          {{ pending ? 'Signing in…' : 'Login' }}
+        </button>
       </form>
 
-      <div class="links">
-        <a routerLink="/auth/forgot-password">Forgot password?</a>
+      <div class="links" aria-label="Helpful links">
+        <a class="link" routerLink="/auth/forgot-password">Forgot password?</a>
       </div>
 
-      <p class="error" *ngIf="error">{{ error }}</p>
+      <p
+        class="alert alert-error"
+        *ngIf="error"
+        role="alert"
+        aria-live="polite"
+      >
+        {{ error }}
+      </p>
     </div>
   </div>
   `,
@@ -40,52 +104,70 @@ import { AuthService, LoginPayload } from '../../../core/services/auth.service';
     background: radial-gradient(1200px 600px at 0% -10%, rgba(124,58,237,.12), transparent 60%),
                 radial-gradient(1200px 600px at 100% 110%, rgba(13,148,136,.12), transparent 60%);
   }
-  .card{
-    width:100%; max-width:420px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:1.25rem 1.25rem 1rem;
-    box-shadow: 0 10px 30px rgba(17,24,39,0.06);
-  }
-  h2{margin:0; color:#111827}
-  .sub{color:#6b7280; margin:.25rem 0 1rem}
-  form{display:grid; gap:.6rem}
-  label{font-size:.85rem; color:#374151}
-  input{
-    padding:.6rem .7rem; border:1px solid #e5e7eb; border-radius:8px; outline:none;
-  }
-  input:focus{border-color:#7C3AED; box-shadow:0 0 0 3px rgba(124,58,237,.15)}
-  .primary{
-    margin-top:.25rem;
-    background:#7C3AED; color:#fff; border:none; border-radius:8px; padding:.6rem .8rem; cursor:pointer;
-  }
-  .primary:disabled{opacity:.6; cursor:not-allowed}
+  .card{ width:100%; max-width:420px; }
   .links{margin-top:.75rem; display:flex; justify-content:flex-end}
-  .links a{color:#7C3AED; text-decoration:none}
-  .error{margin-top:.75rem; color:#EF4444}
   `]
 })
-export class LoginComponent {
+export class LoginComponent implements AfterViewInit {
   private auth = inject(AuthService);
   private router = inject(Router);
+  private platformId = inject(PLATFORM_ID);
 
   model: LoginPayload = { email: '', password: '' };
   error = '';
+  pending = false;
+
+  emailErrorId = 'email-error';
+  passwordErrorId = 'password-error';
+
+  @ViewChild('form') formRef?: NgForm;
+  @ViewChild('emailModel') emailModelRef?: NgModel;
+  @ViewChild('passwordModel') passwordModelRef?: NgModel;
+
+  ngAfterViewInit(): void {
+    // Focus heading when view is ready (main region is already focused via app component)
+    if (isPlatformBrowser(this.platformId)) {
+      const heading = (globalThis as any).document?.getElementById?.('login-heading');
+      heading?.focus?.();
+    }
+  }
 
   // PUBLIC_INTERFACE
-  submit() {
-    /** Submits credentials to backend and handles OTP requirement. */
+  submit(form: NgForm) {
+    /** Submits credentials to backend and handles OTP requirement. Also focuses first invalid field on error. */
     this.error = '';
+    if (form.invalid) {
+      this.focusFirstInvalid(form);
+      return;
+    }
+
+    this.pending = true;
     this.auth.login(this.model).subscribe({
       next: (res) => {
+        this.pending = false;
         if (res?.requiresOtp) {
-          // Navigate to OTP, email is passed for convenience
           this.router.navigate(['/auth/otp'], { queryParams: { email: this.model.email } });
         } else if (res?.token) {
           this.router.navigate(['/dashboard']);
         } else {
-          // Fallback in unexpected responses
           this.router.navigate(['/dashboard']);
         }
       },
-      error: (e) => this.error = e?.error?.message || 'Login failed'
+      error: (e) => {
+        this.pending = false;
+        this.error = e?.error?.message || 'Login failed';
+      }
     });
+  }
+
+  private focusFirstInvalid(form: NgForm) {
+    const controls = Object.values(form.controls);
+    for (const c of controls) {
+      if (c.invalid) {
+        const el = (c as any).valueAccessor?._elementRef?.nativeElement as HTMLElement | undefined;
+        if (el?.focus) { el.focus(); }
+        break;
+      }
+    }
   }
 }

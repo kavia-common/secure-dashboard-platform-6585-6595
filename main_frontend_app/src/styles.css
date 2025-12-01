@@ -1,15 +1,184 @@
 /* Global base styles and theme tokens */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+:root{
+  --primary:#7C3AED;
+  --secondary:#0D9488;
+  --success:#0D9488;
+  --error:#EF4444;
+  --bg:#f9fafb;
+  --surface:#ffffff;
+  --text:#111827;
+  --muted:#6b7280;
+  --ring:#7C3AED;
+  --shadow: 0 10px 30px rgba(17,24,39,0.06);
+  --radius: 12px;
+  --focus-outline: 2px solid #7C3AED;
+  --focus-offset: 3px;
+  --transition: 180ms ease;
+}
+
 html, body {
   height: 100%;
-  background-color: #f9fafb;
-  color: #111827;
+  background-color: var(--bg);
+  color: var(--text);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Skip to content for keyboard users */
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -40px;
+  background: var(--primary);
+  color: #fff;
+  padding: .5rem .75rem;
+  border-radius: 8px;
+  z-index: 9999;
+  transition: top var(--transition);
+}
+.skip-link:focus {
+  top: .5rem;
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-offset);
+}
+
+/* Focus styles with high contrast */
+:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-offset);
+}
+
+/* Utility containers */
+.container {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Card */
+.card {
+  background: var(--surface);
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  border-radius: 8px;
+  padding: .6rem .9rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: filter var(--transition), background-color var(--transition), color var(--transition), border-color var(--transition);
+  text-decoration: none;
+  font-weight: 600;
+}
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+.btn-primary:hover { filter: brightness(.96); }
+.btn-secondary {
+  background: var(--secondary);
+  color: #fff;
+}
+.btn-secondary:hover { filter: brightness(.96); }
+.btn-ghost {
+  background: transparent;
+  border-color: #e5e7eb;
+  color: var(--text);
+}
+.btn-ghost:hover {
+  background: rgba(124,58,237,0.06);
+  border-color: var(--primary);
+}
+.btn[disabled], .btn[aria-disabled="true"] {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+/* Inputs */
+.input {
+  width: 100%;
+  padding: .6rem .7rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.input::placeholder { color: #9ca3af; }
+.input:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px rgba(124,58,237,.15);
+  outline: none;
+}
+
+/* Forms common */
+.form {
+  display: grid;
+  gap: .75rem;
+}
+.form .field {
+  display: grid;
+  gap: .35rem;
+}
+.form label {
+  font-size: .9rem;
+  color: #374151;
+}
+
+/* Headings & text */
+.h1 { font-size: clamp(1.5rem, 2.5vw, 2rem); font-weight: 800; }
+.h2 { font-size: 1.25rem; font-weight: 700; }
+.subtle { color: var(--muted); }
+
+/* Alerts */
+.alert {
+  margin-top: .75rem;
+  padding: .6rem .75rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+.alert-success { color: var(--success); background: rgba(13,148,136,.08); border-color: rgba(13,148,136,.25);}
+.alert-error { color: var(--error); background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.25);}
+
+/* Links */
+.link {
+  color: var(--primary);
+  text-decoration: none;
+}
+.link:hover { text-decoration: underline; }
+
+/* Hero / surface */
+.surface-accent {
+  background: linear-gradient(120deg, rgba(124,58,237,.12), rgba(13,148,136,.12));
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius);
+}
+
+/* Layout helpers */
+.stack-sm > * + * { margin-top: .5rem; }
+.stack-md > * + * { margin-top: .75rem; }
+.stack-lg > * + * { margin-top: 1rem; }
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .skip-link { transition: none; }
+  .btn, .input { transition: none; }
+}
+
+/* Base elements inherit font */
 button { font: inherit; }
-input { font: inherit; }
+input, select, textarea { font: inherit; }
 a { color: inherit; }
