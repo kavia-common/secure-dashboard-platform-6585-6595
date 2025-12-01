@@ -6,9 +6,17 @@ function computeApiBase(): string {
   try {
     if (typeof globalThis !== 'undefined' && (globalThis as any).location) {
       const g: any = globalThis as any;
-      if (g.NG_APP_BACKEND_URL && typeof g.NG_APP_BACKEND_URL === 'string') {
-        return g.NG_APP_BACKEND_URL;
+
+      // Support multiple overrides for robustness in various deployment setups
+      const explicit =
+        g.NG_APP_API_BASE ||
+        g.NG_APP_API_BASE_URL ||
+        g.NG_APP_BACKEND_URL;
+
+      if (explicit && typeof explicit === 'string') {
+        return explicit;
       }
+
       const { protocol, hostname } = g.location;
       if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
         return `${protocol}//${hostname}:3001`;

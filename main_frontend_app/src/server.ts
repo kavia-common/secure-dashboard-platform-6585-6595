@@ -13,6 +13,13 @@ const app = express();
 const commonEngine = new CommonEngine();
 
 /**
+ * Lightweight health endpoint for preview checks.
+ */
+app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'ok', app: 'frontend', timestamp: new Date().toISOString() });
+});
+
+/**
  * Example Express Rest API endpoints can be defined here.
  * Uncomment and define endpoints as necessary.
  *
