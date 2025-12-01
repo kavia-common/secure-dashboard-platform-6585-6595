@@ -142,9 +142,11 @@ export class LoginComponent implements AfterViewInit {
     }
 
     this.pending = true;
+    console.info('[Login] Submitting credentials');
     this.auth.login(this.model).subscribe({
       next: (res) => {
         this.pending = false;
+        console.info('[Login] Response received', res);
         if (res?.requiresOtp) {
           this.router.navigate(['/auth/otp'], { queryParams: { email: this.model.email } });
         } else if (res?.token) {
@@ -155,7 +157,13 @@ export class LoginComponent implements AfterViewInit {
       },
       error: (e) => {
         this.pending = false;
-        this.error = e?.error?.message || 'Login failed';
+        console.error('[Login] Request failed', {
+          message: e?.message,
+          status: e?.status,
+          statusText: e?.statusText,
+          error: e?.error
+        });
+        this.error = e?.error?.message || (e?.status === 0 ? 'Network error or CORS blocked' : 'Login failed');
       }
     });
   }

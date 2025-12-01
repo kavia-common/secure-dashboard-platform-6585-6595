@@ -89,9 +89,19 @@ export class OtpComponent implements AfterViewInit {
       return;
     }
     this.pending = true;
+    console.info('[OTP] Verifying code for', this.email);
     this.auth.verifyOtp({ email: this.email, otp: this.otp }).subscribe({
-      next: () => { this.pending = false; this.router.navigate(['/dashboard']); },
-      error: (e) => { this.pending = false; this.error = e?.error?.message || 'OTP verification failed'; }
+      next: () => { this.pending = false; console.info('[OTP] Verification success'); this.router.navigate(['/dashboard']); },
+      error: (e) => {
+        this.pending = false;
+        console.error('[OTP] Verification failed', {
+          message: e?.message,
+          status: e?.status,
+          statusText: e?.statusText,
+          error: e?.error
+        });
+        this.error = e?.error?.message || (e?.status === 0 ? 'Network error or CORS blocked' : 'OTP verification failed');
+      }
     });
   }
 }

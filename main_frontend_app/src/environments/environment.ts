@@ -38,3 +38,10 @@ export const environment = {
   production: false,
   apiBaseUrl: computeApiBase()
 };
+
+// Log once at module eval to aid diagnostics during SSR or browser init
+try {
+  console.info('[Env] Resolved apiBaseUrl:', (globalThis as any)?.ENV_API_BASE || (environment as any).apiBaseUrl);
+} catch {
+  // ignore
+}

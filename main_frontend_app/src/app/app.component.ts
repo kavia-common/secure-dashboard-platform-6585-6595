@@ -4,11 +4,13 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { AuthService } from './core/services/auth.service';
 import { filter, Subscription } from 'rxjs';
 import { PLATFORM_ID } from '@angular/core';
+import { ApiService } from './core/services/api.service';
 
 /**
  * Root component rendering the header and the routed views.
  * Includes "Violet Dreams" theme accents and a logout button.
  * Manages focus to main content on route changes for accessibility.
+ * Displays a small diagnostics badge with the current API base URL.
  */
 @Component({
   selector: 'app-root',
@@ -22,11 +24,16 @@ export class AppComponent implements OnInit, OnDestroy {
   private auth = inject(AuthService);
   private router = inject(Router);
   private platformId = inject(PLATFORM_ID);
+  private api = inject(ApiService);
 
   isLoggedIn = computed(() => this.auth.isAuthenticated());
   private sub?: Subscription;
 
   @ViewChild('mainEl') mainEl?: ElementRef<HTMLElement>;
+
+  get apiBase(): string {
+    return this.api.getBaseUrl();
+  }
 
   ngOnInit(): void {
     // Move focus to main region after each navigation
