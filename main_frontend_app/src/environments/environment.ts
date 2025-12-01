@@ -2,6 +2,7 @@
  * Environment configuration for development.
  * Computes apiBaseUrl dynamically when running in a browser to avoid mixed-content or host mismatches.
  * Honors deployment-provided globals for flexibility.
+ * Note: The app defaults to MOCK mode; apiBaseUrl is for future live backend use.
  */
 function computeApiBase(): string {
   // Prefer explicit override if a global is provided by hosting environment

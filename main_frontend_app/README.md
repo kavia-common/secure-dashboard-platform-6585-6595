@@ -2,28 +2,52 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.1.
 
+## Backend removed — in-browser mock enabled
+
+The previous Express-based backend has been removed. The app now runs entirely in the browser by using a MockAuthService that simulates the following endpoints:
+
+- POST /auth/login
+- POST /auth/verify-otp
+- POST /auth/forgot-password
+- POST /auth/reset-password
+
+Seed credentials:
+- Email: `demo@example.com`
+- Password: `Password123`
+
+Login flow:
+1) Login with the seed credentials.
+2) You'll be prompted for a 6-digit OTP. The mock prints the OTP to the browser console for convenience.
+3) On OTP verification, a fake JWT is stored in localStorage and you are redirected to the dashboard.
+
+Forgot/Reset flow:
+- Forgot generates a reset token and logs it to the console.
+- Reset accepts the token via query param `?token=...` and updates the in-memory password.
+
+## Toggle between mock and live backend (future)
+
+- The app defaults to mock mode (no backend required).
+- To enable a live backend later:
+  1. Provide a real backend implementing the endpoints listed above.
+  2. Set a global before app load to disable mock mode:
+     ```html
+     <script>
+       window.NG_APP_USE_MOCK_API = false;
+       window.NG_APP_API_BASE = 'https://your-backend.example.com';
+     </script>
+     ```
+  3. The app will then use the real HTTP-backed AuthService.
+
+Environment base URL (for future live use) is read from `src/environments/environment.ts` and can be overridden at runtime via `window.NG_APP_API_BASE`, `window.NG_APP_API_BASE_URL`, or `window.NG_APP_BACKEND_URL`.
+
 ## Features implemented
 
 - Lazy-loaded Auth and Dashboard routes
-- Core ApiService and AuthService with token storage
+- MockAuthService with token storage and OTP simulation
 - AuthGuard for protecting Dashboard
-- Environment files with API base: http://localhost:3001
 - Pages: Login, OTP, Forgot Password, Reset Password
 - Violet Dreams theme with header and logout
-
-## Accessibility and UX enhancements
-
-- Skip link: a "Skip to main content" link is available as the first focusable element for keyboard users.
-- Landmarks: header has role="banner", main has role="main" and is focusable (tabindex="-1") to receive focus on route changes.
-- Forms:
-  - All inputs have associated labels via for/id, proper aria-required and aria-invalid bindings.
-  - Error, success messages use aria-live regions (role="alert" or role="status") to notify screen readers.
-  - Submit buttons expose aria-busy and aria-disabled while API calls are in-flight.
-  - On submit with validation errors the first invalid control receives focus.
-- Keyboard navigation: logical tab order, Enter submits forms, Escape can be handled by the browser to clear fields.
-- Focus visibility: strong high-contrast focus outline and offset across interactive controls.
-- Reduced motion: honors prefers-reduced-motion by reducing transitions.
-- Consistent theme utilities: shared .btn, .input, .card classes and color tokens ensure visual consistency.
+- Accessibility enhancements (skip link, roles, aria, focus management)
 
 ## Development server
 
@@ -34,13 +58,6 @@ ng serve
 ```
 
 Navigate to `http://localhost:3000/` (port is configured in angular.json). The app will live-reload on changes.
-
-Back-end API base is set via `src/environments/environment.ts` and defaults to `http://localhost:3001`.
-
-- Ensure the backend CORS allows origin http://localhost:3000 and accepts standard JSON headers.
-- OTP flow:
-  1) POST /auth/login with email/password. If response contains `{ requiresOtp: true, otpToken: "<token>" }`, the app stores otpToken and routes to /auth/otp.
-  2) POST /auth/verify-otp with `{ email, otp, otpToken }` (otpToken is auto-supplied from storage). On success `{ token }` is stored and you are routed to /dashboard.
 
 ## Build
 

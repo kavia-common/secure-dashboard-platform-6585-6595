@@ -1,6 +1,7 @@
 /**
  * Environment configuration for production.
  * Computes apiBaseUrl dynamically when running in a browser to avoid mixed-content or host mismatches.
+ * Note: The app defaults to MOCK mode; apiBaseUrl is for future live backend use.
  */
 function computeApiBase(): string {
   try {
