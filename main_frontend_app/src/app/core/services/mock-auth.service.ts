@@ -41,6 +41,9 @@ export class MockAuthService {
 
   private _isAuthed = signal<boolean>(this.getToken() !== null);
 
+  // Marker to help identify the mock in consumers without importing the class.
+  public readonly __isMockAuth = true;
+
   private isBrowser(): boolean {
     return isPlatformBrowser(this.platformId);
   }
@@ -213,6 +216,12 @@ export class MockAuthService {
         // ignore
       }
     }
+  }
+
+  // PUBLIC_INTERFACE
+  getCurrentOtp(): string | null {
+    /** Returns the currently active OTP in mock mode for testing aids. */
+    return this.currentOtp;
   }
 }
 
